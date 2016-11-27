@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -27,26 +27,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -97,14 +97,14 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\include;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Include;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Third-Party\Include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\include;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Include;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Third-Party\Include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeaderFile>DcCommonHeader.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\lib-vc2013;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Bin;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Third-Party\Bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\lib-vc2015;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Bin;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Third-Party\Bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glfw3.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <AdditionalOptions>/VERBOSE:LIB %(AdditionalOptions)</AdditionalOptions>
@@ -136,7 +136,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\include;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Include;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Third-Party\Include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\include;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Include;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Third-Party\Include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeaderFile>DcCommonHeader.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -147,7 +147,7 @@
       </EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>glfw3.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\lib-vc2013;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Bin;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Third-Party\Bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\lib-vc2015;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Bin;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Third-Party\Bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
