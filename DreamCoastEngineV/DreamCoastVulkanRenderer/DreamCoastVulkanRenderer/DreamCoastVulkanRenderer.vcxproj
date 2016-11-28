@@ -159,15 +159,18 @@
     <ClCompile Include="FileManager.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="SystemSetting.cpp" />
+    <ClCompile Include="VertexElements.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DcCommonHeader.h" />
     <ClInclude Include="FileManager.h" />
     <ClInclude Include="SystemSetting.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="VertexElements.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\Shader\BaseFragmentShader.frag" />
+    <None Include="..\..\..\Shader\BaseTriVertexShader.vert" />
     <None Include="..\..\..\Shader\BaseVertexShader.vert" />
     <None Include="..\..\..\Shader\Compile.bat" />
   </ItemGroup>

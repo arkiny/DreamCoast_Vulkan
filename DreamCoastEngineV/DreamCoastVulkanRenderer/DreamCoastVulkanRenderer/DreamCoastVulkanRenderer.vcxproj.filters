@@ -30,6 +30,9 @@
     <ClCompile Include="FileManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="VertexElements.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DcCommonHeader.h">
@@ -44,15 +47,21 @@
     <ClInclude Include="FileManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="VertexElements.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\Shader\BaseFragmentShader.frag">
       <Filter>Shader</Filter>
     </None>
-    <None Include="..\..\..\Shader\BaseVertexShader.vert">
+    <None Include="..\..\..\Shader\Compile.bat">
       <Filter>Shader</Filter>
     </None>
-    <None Include="..\..\..\Shader\Compile.bat">
+    <None Include="..\..\..\Shader\BaseTriVertexShader.vert">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="..\..\..\Shader\BaseVertexShader.vert">
       <Filter>Shader</Filter>
     </None>
   </ItemGroup>

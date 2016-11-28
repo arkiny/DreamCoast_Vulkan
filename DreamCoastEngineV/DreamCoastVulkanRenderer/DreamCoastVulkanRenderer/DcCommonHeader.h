@@ -7,8 +7,9 @@
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 // Vulkan은 더이상 내부에서 매트릭스등의 수학함수를 가지고 있지 않으므로 사용합니다.
-#include <glm\vec4.hpp>
-#include <glm\mat4x4.hpp>
+#include <glm\glm.hpp>
+//#include <glm\vec4.hpp>
+//#include <glm\mat4x4.hpp>
 
 // std c, c++
 #include <iostream>
@@ -20,3 +21,4 @@
 #include <set>
 #include <algorithm>
 #include <fstream>
+#include <array>
