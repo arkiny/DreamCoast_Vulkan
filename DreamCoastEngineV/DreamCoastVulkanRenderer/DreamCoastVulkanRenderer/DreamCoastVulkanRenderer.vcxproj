@@ -157,6 +157,7 @@
   <ItemGroup>
     <ClCompile Include="AppMain.cpp" />
     <ClCompile Include="FileManager.cpp" />
+    <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="SystemSetting.cpp" />
     <ClCompile Include="VertexElements.cpp" />
@@ -164,6 +165,7 @@
   <ItemGroup>
     <ClInclude Include="DcCommonHeader.h" />
     <ClInclude Include="FileManager.h" />
+    <ClInclude Include="Geometry.h" />
     <ClInclude Include="SystemSetting.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="VertexElements.h" />

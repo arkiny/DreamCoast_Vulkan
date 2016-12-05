@@ -7,74 +7,6 @@ extern VkResult CreateDebugReportCallbackEXT(VkInstance instance, const VkDebugR
 
 extern void DestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT callback, const VkAllocationCallbacks* pAllocator);
 
-// 스쿠프 딜리터, 람다 매직을 통해 구현한다.
-template <typename T>
-class VDeleter {
-public:
-	VDeleter() : VDeleter([](T, VkAllocationCallbacks*) {}) {}
-
-	VDeleter(std::function<void(T, VkAllocationCallbacks*)> deletef)
-	{
-		this->deleter = [=](T obj) { deletef(obj, nullptr); };
-	}
-
-	VDeleter(const VDeleter<VkInstance>& instance, std::function<void(VkInstance, T, VkAllocationCallbacks*)> deletef)
-	{
-		this->deleter = [&instance, deletef](T obj) { deletef(instance, obj, nullptr); };
-	}
-
-	VDeleter(const VDeleter<VkDevice>& device, std::function<void(VkDevice, T, VkAllocationCallbacks*)> deletef)
-	{
-		this->deleter = [&device, deletef](T obj) { deletef(device, obj, nullptr); };
-	}
-
-	~VDeleter()
-	{
-		cleanup();
-	}
-
-	const T* operator &() const
-	{
-		return &object;
-	}
-
-	T* replace()
-	{
-		cleanup();
-		return &object;
-	}
-
-	operator T() const
-	{
-		return object;
-	}
-
-	void operator=(T rhs)
-	{
-		if (rhs != object) {
-			cleanup();
-			object = rhs;
-		}
-	}
-
-	template<typename V>
-	bool operator==(V rhs)
-	{
-		return object == T(rhs);
-	}
-
-private:
-	T object{ VK_NULL_HANDLE };
-	std::function<void(T)> deleter;
-
-	void cleanup() {
-		if (object != VK_NULL_HANDLE) {
-			deleter(object);
-		}
-		object = VK_NULL_HANDLE;
-	}
-};
-
 // 불칸에서는 모든 명령이 큐로 이루지고 이런 다른 타입들의 큐는 각각의 큐패밀리들에 들어있습니다.
 struct QueueFamilyIndices
 {
@@ -114,6 +46,9 @@ public:
 	virtual void WaitIdle();
 	virtual void RecreateSwapChain();
 
+public:
+	static void CreateVertexBuffer(Renderer* InRenderer, const std::vector<Vertex>& InVertex);
+
 private:
 	//creators
 	bool CheckValidationLayerSupport();
@@ -152,6 +87,8 @@ private:
 	VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 	void CreateShaderModule(const std::vector<char>& code, VDeleter<VkShaderModule>& shaderModule);
 
+	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
 private:
 	VDeleter<VkInstance> instance{ vkDestroyInstance }; // 불칸 인스탄스
 	VDeleter<VkDebugReportCallbackEXT> callback{ instance, DestroyDebugReportCallbackEXT }; // 불칸 콜백 확장함수
@@ -185,4 +122,9 @@ private:
 
 	VDeleter<VkSemaphore> imageAvailableSemaphore{ device, vkDestroySemaphore };
 	VDeleter<VkSemaphore> renderFinishedSemaphore{ device, vkDestroySemaphore };
+
+
+	VDeleter<VkBuffer> VertexBuffer{device, vkDestroyBuffer};
+	uint32_t VertexNum;
+	VDeleter<VkDeviceMemory> VertexBufferMemory{ device, vkFreeMemory };
 };

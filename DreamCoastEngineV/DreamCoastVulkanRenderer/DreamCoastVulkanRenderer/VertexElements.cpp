@@ -1,7 +1,7 @@
 #include "DcCommonHeader.h"
 #include "VertexElements.h"
 
-inline VkVertexInputBindingDescription Vertex::getBindingDescription()
+VkVertexInputBindingDescription Vertex::getBindingDescription()
 {
 	//VK_VERTEX_INPUT_RATE_VERTEX: Move to the next data entry after each vertex
 	//VK_VERTEX_INPUT_RATE_INSTANCE : Move to the next data entry after each instance
@@ -13,7 +13,7 @@ inline VkVertexInputBindingDescription Vertex::getBindingDescription()
 	return bindingDescrption;
 }
 
-inline std::array<VkVertexInputAttributeDescription, 2> Vertex::getAttributeDescription()
+std::array<VkVertexInputAttributeDescription, 2> Vertex::getAttributeDescription()
 {
 	std::array<VkVertexInputAttributeDescription, 2> attributionDescription = {};
 	attributionDescription[0].binding = 0;

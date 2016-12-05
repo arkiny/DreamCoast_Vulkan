@@ -1,10 +1,20 @@
 #include "DcCommonHeader.h"
 #include "SystemSetting.h"
 #include "Renderer.h"
+#include "Geometry.h"
+
+VulkanRenderer* GRenderer = nullptr;
 
 class DreamCoastVulkan_Triangle
 {
 public:
+	~DreamCoastVulkan_Triangle()
+	{
+		if (Geom)
+		{
+			delete Geom;
+		}
+	}
 	void run()
 	{
 		initWindow();
@@ -14,6 +24,7 @@ public:
 private:
 	void initWindow()
 	{
+#ifdef GLFW_INCLUDE_VULKAN
 		glfwInit();// glfw ÃÊ±âÈ­
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -25,6 +36,7 @@ private:
 
 		glfwSetWindowUserPointer(window, this);
 		glfwSetWindowSizeCallback(window, DreamCoastVulkan_Triangle::OnWindowResized);
+#endif
 	}
 
 	void initVulkan()
@@ -32,13 +44,21 @@ private:
 		VulkanRenderer* vulkanRenderer = new VulkanRenderer;
 		vulkanRenderer->InitRenderer(window);
 		renderer = vulkanRenderer;
+#ifdef GLFW_INCLUDE_VULKAN
+		GRenderer = vulkanRenderer;
+#endif
+		Geom = new Geometry();
+		Geom->SetVertexBuffer();
+		renderer->RecreateSwapChain();
 	}
 
 	void mainLoop()
 	{
 		while (!glfwWindowShouldClose(window))
-		{
+		{			
 			glfwPollEvents();
+			// Game Frame
+			//
 			renderer->DrawFrame();
 		}
 		renderer->WaitIdle();
@@ -59,6 +79,7 @@ private:
 private:
 	GLFWwindow* window = nullptr;
 	Renderer* renderer = nullptr;
+	Geometry* Geom = nullptr;
 };
 
 

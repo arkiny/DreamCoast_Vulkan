@@ -1,5 +1,6 @@
 #include "DcCommonHeader.h"
 #include "Renderer.h"
+#include "Geometry.h"
 #include "SystemSetting.h"
 #include "FileManager.h"
 
@@ -28,6 +29,7 @@ void DestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT
 }
 
 VulkanRenderer::VulkanRenderer()
+	: VertexNum(0)
 {
 
 }
@@ -628,11 +630,15 @@ void VulkanRenderer::CreateGraphicsPipeLine()
 	// 일단 현재는 퍼텍스 데이타가 쉐이더에 해드코딩 되있으므로, 현재 추가할 버텍스 데이타는 없다.
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+	auto bindingDescription = Vertex::getBindingDescription();
+	auto attributeDescription = Vertex::getAttributeDescription();
+
 	// 버텍스 데이타 바인딩 정보입력
-	vertexInputInfo.vertexBindingDescriptionCount = 0;
-	vertexInputInfo.pVertexBindingDescriptions = nullptr; // optional
-	vertexInputInfo.vertexAttributeDescriptionCount = 0;
-	vertexInputInfo.pVertexAttributeDescriptions = nullptr; // optional
+	vertexInputInfo.vertexBindingDescriptionCount = 1;
+	vertexInputInfo.pVertexBindingDescriptions = &bindingDescription; // optional
+	vertexInputInfo.vertexAttributeDescriptionCount = attributeDescription.size();
+	vertexInputInfo.pVertexAttributeDescriptions = attributeDescription.data(); // optional
 
 	// 입력 조합기, 버텍스를 어떻게 조합할것인가.. 익히 아는 그것
 	//VK_PRIMITIVE_TOPOLOGY_POINT_LIST: 포인트 리스들
@@ -836,6 +842,20 @@ void VulkanRenderer::CreateShaderModule(const std::vector<char>& code, VDeleter<
 	}
 }
 
+uint32_t VulkanRenderer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
+{
+	VkPhysicalDeviceMemoryProperties memProperties;
+	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+	{
+		if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+		{
+			return i;
+		}
+	}
+	throw std::runtime_error("failed to find suitable memory type!");
+}
+
 void VulkanRenderer::CreateRenderPass()
 {
 	VkAttachmentDescription colorAttachment = {};
@@ -1011,11 +1031,17 @@ void VulkanRenderer::CreateCommandBuffers()
 
 		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
+		if (VertexNum > 0)
+		{
+			VkBuffer vertexBuffers[] = { VertexBuffer };
+			VkDeviceSize offsets[] = { 0 };
+			vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+		}		
 		//vertexCount, 버텍스 세개짜리 삼각형을 그리므로..
 		//instanceCount, 인스탄스 렌더링을 쓰지 않는다.
 		//firstVertex, // 버텍스 버퍼에서의 오프셋
 		//firstIntance // 인스탄스 렌더링에서의 오프셋
-		vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+		vkCmdDraw(commandBuffers[i], VertexNum, 1, 0, 0);
 
 		vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -1034,6 +1060,52 @@ void VulkanRenderer::CreateSemaphore()
 		vkCreateSemaphore(device, &semaphoreInfo, nullptr, renderFinishedSemaphore.replace()) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create semaphores!");
+	}
+}
+
+void VulkanRenderer::CreateVertexBuffer(Renderer* InRenderer, const std::vector<Vertex>& InVertex)
+{
+	if (VulkanRenderer* VRenderer = dynamic_cast<VulkanRenderer*>(InRenderer))
+	{
+		VRenderer->VertexNum = 0;
+		VkBufferCreateInfo bufferInfo = {};
+		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		bufferInfo.size = sizeof(InVertex[0]) * InVertex.size();
+		bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+		//VDeleter<VkBuffer> vertexBuffer{ VRenderer->device, vkDestroyBuffer };
+		//VDeleter<VkDeviceMemory> vertexBufferMemory{ VRenderer->device, vkFreeMemory };
+
+		if (vkCreateBuffer(VRenderer->device, &bufferInfo, nullptr, VRenderer->VertexBuffer.replace()) != VK_SUCCESS)
+		{
+			throw std::runtime_error("failed to create vertex buffer");
+		}
+		VkMemoryRequirements memRequirements;
+		vkGetBufferMemoryRequirements(VRenderer->device, VRenderer->VertexBuffer, &memRequirements);
+
+		VkMemoryAllocateInfo allocInfo = {};
+		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocInfo.allocationSize = memRequirements.size;
+		allocInfo.memoryTypeIndex = VRenderer->findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		
+		if (vkAllocateMemory(VRenderer->device, &allocInfo, nullptr, VRenderer->VertexBufferMemory.replace()) != VK_SUCCESS)
+		{
+			throw std::runtime_error("failed to allocate vertex buffer");
+
+		}
+
+		vkBindBufferMemory(VRenderer->device, VRenderer->VertexBuffer, VRenderer->VertexBufferMemory, 0);
+
+		void* data;
+		vkMapMemory(VRenderer->device, VRenderer->VertexBufferMemory, 0, bufferInfo.size, 0, &data);
+		memcpy(data, InVertex.data(), (size_t)bufferInfo.size);
+		vkUnmapMemory(VRenderer->device, VRenderer->VertexBufferMemory);
+		VRenderer->VertexNum = (uint32_t)InVertex.size();
+	}
+	else
+	{
+		throw std::runtime_error("failed to create vertex buffer");
 	}
 }
 
