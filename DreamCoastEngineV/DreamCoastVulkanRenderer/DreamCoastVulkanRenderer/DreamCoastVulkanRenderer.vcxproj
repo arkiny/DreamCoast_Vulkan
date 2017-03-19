@@ -171,6 +171,7 @@
     <ClInclude Include="VertexElements.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\README.md" />
     <None Include="..\..\..\Shader\BaseFragmentShader.frag" />
     <None Include="..\..\..\Shader\BaseTriVertexShader.vert" />
     <None Include="..\..\..\Shader\BaseVertexShader.vert" />

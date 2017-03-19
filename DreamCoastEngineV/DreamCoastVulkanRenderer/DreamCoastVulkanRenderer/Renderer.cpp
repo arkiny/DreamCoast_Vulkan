@@ -4,6 +4,10 @@
 #include "SystemSetting.h"
 #include "FileManager.h"
 
+// 튜토리얼용 임시 전역 변수
+Geometry Triangle;
+//
+
 
 VkResult CreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT* pCreateInfo,
 	const VkAllocationCallbacks* pAllocator, VkDebugReportCallbackEXT* pCallback)
@@ -52,6 +56,10 @@ void VulkanRenderer::InitRenderer(GLFWwindow* InWindow)
 	CreateGraphicsPipeLine(); // 그래픽 파이프 라인 만들기, 셰이더 불러오기 포함
 	CreateFrameBuffer(); // 프레임 버퍼 만들기
 	CreateCommandPool(); // 커맨드 풀 만들기
+
+	CreateVertexBuffer(Triangle.trianglevertices); // 버텍스 버퍼만들기
+	
+	
 	CreateCommandBuffers(); // 커맨드 버퍼 만들기
 	CreateSemaphore(); // 세마포어 만들기
 }
@@ -1063,50 +1071,101 @@ void VulkanRenderer::CreateSemaphore()
 	}
 }
 
-void VulkanRenderer::CreateVertexBuffer(Renderer* InRenderer, const std::vector<Vertex>& InVertex)
+void VulkanRenderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VDeleter<VkBuffer>& buffer, VDeleter<VkDeviceMemory>& bufferMemory)
 {
-	if (VulkanRenderer* VRenderer = dynamic_cast<VulkanRenderer*>(InRenderer))
-	{
-		VRenderer->VertexNum = 0;
-		VkBufferCreateInfo bufferInfo = {};
-		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferInfo.size = sizeof(InVertex[0]) * InVertex.size();
-		bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	// 스테이징 버퍼
+	// 버텍스 버퍼의 경우에 CPU에서 접근 할수 있기 때문에 최적화 되어있는 버퍼가 아니다.
+	// 따라서 CPU에서 접근하지 못하도록 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT의 플래그를 가진 버퍼를 만든다.
+	// 메모리 트랜스퍼 (메모리 변환)을 위해선는 VK_QUEUE_TRANSFER_BIT을 지원하는 패밀리 큐가 있어야 하고,
+	// 다행히 VK_QUEUE_GRAPHICS_BIT과 VK_QUEUE_COMPUTE_BIT는 암묵적으로 VK_QUEUE_TRANSFER_BIT를 지원한다.
 
-		//VDeleter<VkBuffer> vertexBuffer{ VRenderer->device, vkDestroyBuffer };
-		//VDeleter<VkDeviceMemory> vertexBufferMemory{ VRenderer->device, vkFreeMemory };
+	VkBufferCreateInfo bufferInfo = {};
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.size = size;
+	bufferInfo.usage = usage;
+	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		if (vkCreateBuffer(VRenderer->device, &bufferInfo, nullptr, VRenderer->VertexBuffer.replace()) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create vertex buffer");
-		}
-		VkMemoryRequirements memRequirements;
-		vkGetBufferMemoryRequirements(VRenderer->device, VRenderer->VertexBuffer, &memRequirements);
+	//VDeleter<VkBuffer> vertexBuffer{ VRenderer->device, vkDestroyBuffer };
+	//VDeleter<VkDeviceMemory> vertexBufferMemory{ VRenderer->device, vkFreeMemory };
 
-		VkMemoryAllocateInfo allocInfo = {};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = VRenderer->findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-		
-		if (vkAllocateMemory(VRenderer->device, &allocInfo, nullptr, VRenderer->VertexBufferMemory.replace()) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to allocate vertex buffer");
-
-		}
-
-		vkBindBufferMemory(VRenderer->device, VRenderer->VertexBuffer, VRenderer->VertexBufferMemory, 0);
-
-		void* data;
-		vkMapMemory(VRenderer->device, VRenderer->VertexBufferMemory, 0, bufferInfo.size, 0, &data);
-		memcpy(data, InVertex.data(), (size_t)bufferInfo.size);
-		vkUnmapMemory(VRenderer->device, VRenderer->VertexBufferMemory);
-		VRenderer->VertexNum = (uint32_t)InVertex.size();
-	}
-	else
+	if (vkCreateBuffer(device, &bufferInfo, nullptr, buffer.replace()) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create vertex buffer");
 	}
+	VkMemoryRequirements memRequirements;
+	vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
+
+	VkMemoryAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequirements.size;
+	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+	if (vkAllocateMemory(device, &allocInfo, nullptr, bufferMemory.replace()) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to allocate buffer memory");
+
+	}
+
+	vkBindBufferMemory(device, buffer, bufferMemory, 0);
+}
+
+void VulkanRenderer::CreateVertexBuffer(const std::vector<Vertex>& InVertex)
+{
+	VertexNum = 0;
+
+	VkDeviceSize bufferSize = sizeof(InVertex[0]) * InVertex.size();
+	VDeleter<VkBuffer> stagingBuffer{ device, vkDestroyBuffer };
+	VDeleter<VkDeviceMemory> stagingBufferMemory{ device, vkFreeMemory };
+	
+	//VK_BUFFER_USAGE_TRANSFER_SRC_BIT: 메모리 트랜스퍼 작업에서 소스가 될수 있는 버퍼
+	//VK_BUFFER_USAGE_TRANSFER_DST_BIT: 메모리 트랜스퍼 작업에서 목적지가 될수 있는 버퍼
+
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+	void* data;
+	vkMapMemory(device, stagingBufferMemory	, 0, bufferSize, 0, &data);
+	memcpy(data, InVertex.data(), bufferSize);
+	vkUnmapMemory(device, stagingBufferMemory);
+
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VertexBuffer, VertexBufferMemory);
+	CopyBuffer(stagingBuffer, VertexBuffer, bufferSize);
+
+	VertexNum = (uint32_t)InVertex.size();
+}
+
+void VulkanRenderer::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+{
+	VkCommandBufferAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = commandPool;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+
+	VkCommandBufferBeginInfo beginInfo = {};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT; // 한번만 서밋한다는 이야기
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+	VkBufferCopy copyRegion = {};
+	copyRegion.srcOffset = 0; // Optional
+	copyRegion.dstOffset = 0; // Optional
+	copyRegion.size = size;
+	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+	vkEndCommandBuffer(commandBuffer);
+
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	vkQueueSubmit(graphicQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(graphicQueue);
+
+	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
 void VulkanRenderer::DrawFrame()

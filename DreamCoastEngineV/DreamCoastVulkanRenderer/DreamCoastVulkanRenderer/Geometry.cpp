@@ -4,5 +4,5 @@
 
 void Geometry::SetVertexBuffer()
 {
-	 VulkanRenderer::CreateVertexBuffer(GRenderer, vertices);
+	GRenderer->CreateVertexBuffer(trianglevertices);
 }

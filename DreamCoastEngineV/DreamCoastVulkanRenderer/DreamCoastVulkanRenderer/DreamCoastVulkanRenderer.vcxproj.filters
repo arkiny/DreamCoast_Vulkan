@@ -70,5 +70,6 @@
     <None Include="..\..\..\Shader\BaseVertexShader.vert">
       <Filter>Shader</Filter>
     </None>
+    <None Include="..\..\..\README.md" />
   </ItemGroup>
 </Project>

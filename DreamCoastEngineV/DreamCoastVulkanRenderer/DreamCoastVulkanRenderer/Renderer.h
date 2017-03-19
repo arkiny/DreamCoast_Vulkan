@@ -47,7 +47,8 @@ public:
 	virtual void RecreateSwapChain();
 
 public:
-	static void CreateVertexBuffer(Renderer* InRenderer, const std::vector<Vertex>& InVertex);
+	void CreateVertexBuffer(const std::vector<Vertex>& InVertex);
+	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 private:
 	//creators
@@ -70,6 +71,8 @@ private:
 	void CreateCommandPool();
 	void CreateCommandBuffers();
 	void CreateSemaphore();
+
+	void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VDeleter<VkBuffer>& buffer, VDeleter<VkDeviceMemory>& bufferMemory);
 
 	// helpers
 	static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType,
