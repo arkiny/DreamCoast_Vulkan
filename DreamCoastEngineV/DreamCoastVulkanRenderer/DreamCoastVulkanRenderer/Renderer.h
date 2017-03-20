@@ -48,6 +48,8 @@ public:
 
 public:
 	void CreateVertexBuffer(const std::vector<Vertex>& InVertex);
+	void CreateIndexBuffer(const std::vector<uint16_t>& InIndices);
+
 	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 private:
@@ -130,4 +132,7 @@ private:
 	VDeleter<VkBuffer> VertexBuffer{device, vkDestroyBuffer};
 	uint32_t VertexNum;
 	VDeleter<VkDeviceMemory> VertexBufferMemory{ device, vkFreeMemory };
+
+	VDeleter<VkBuffer> IndexBuffer{ device, vkDestroyBuffer };
+	VDeleter<VkDeviceMemory> IndexBufferMemory{device, vkFreeMemory};
 };

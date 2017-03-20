@@ -71,5 +71,14 @@
       <Filter>Shader</Filter>
     </None>
     <None Include="..\..\..\README.md" />
+    <None Include="..\..\..\Shader\BaseFragmentShader.spv">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="..\..\..\Shader\BaseTriVertexShader.spv">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="..\..\..\Shader\BaseVertexShader.spv">
+      <Filter>Shader</Filter>
+    </None>
   </ItemGroup>
 </Project>

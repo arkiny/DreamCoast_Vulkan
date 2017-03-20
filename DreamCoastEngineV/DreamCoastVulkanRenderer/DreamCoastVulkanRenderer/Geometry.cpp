@@ -4,5 +4,6 @@
 
 void Geometry::SetVertexBuffer()
 {
-	GRenderer->CreateVertexBuffer(trianglevertices);
+	//GRenderer->CreateVertexBuffer(trianglevertices);
+	//GRenderer->CreateVertexBuffer(QuadVertices);
 }

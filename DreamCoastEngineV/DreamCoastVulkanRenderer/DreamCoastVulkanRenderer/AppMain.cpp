@@ -47,8 +47,6 @@ private:
 #ifdef GLFW_INCLUDE_VULKAN
 		GRenderer = vulkanRenderer;
 #endif
-		Geom = new Geometry();
-		Geom->SetVertexBuffer();
 		renderer->RecreateSwapChain();
 	}
 

@@ -6,6 +6,7 @@
 
 // 튜토리얼용 임시 전역 변수
 Geometry Triangle;
+Geometry Quads;
 //
 
 
@@ -57,7 +58,9 @@ void VulkanRenderer::InitRenderer(GLFWwindow* InWindow)
 	CreateFrameBuffer(); // 프레임 버퍼 만들기
 	CreateCommandPool(); // 커맨드 풀 만들기
 
-	CreateVertexBuffer(Triangle.trianglevertices); // 버텍스 버퍼만들기
+	//CreateVertexBuffer(Triangle.trianglevertices); // 버텍스 버퍼만들기, 동적처리는 좀 나중에
+	CreateVertexBuffer(Quads.QuadVertices);
+	CreateIndexBuffer(Quads.QuadIndices);
 	
 	
 	CreateCommandBuffers(); // 커맨드 버퍼 만들기
@@ -605,8 +608,8 @@ void VulkanRenderer::CreateImageViews()
 void VulkanRenderer::CreateGraphicsPipeLine()
 {
 	// 바이트 코드로 컴파일된 쉐이더들을 불러온다.
-	auto vertShaderCode = FileManager::ReadFile("../../../Shader/vert.spv");
-	auto fragShaderCode = FileManager::ReadFile("../../../Shader/frag.spv");
+	auto vertShaderCode = FileManager::ReadFile("../../../Shader/BaseVertexShader.spv");
+	auto fragShaderCode = FileManager::ReadFile("../../../Shader/BaseFragmentShader.spv");
 	
 	// 셰이더 모듈을 생성한다.
 	CreateShaderModule(vertShaderCode, vertShaderModule);
@@ -1049,7 +1052,11 @@ void VulkanRenderer::CreateCommandBuffers()
 		//instanceCount, 인스탄스 렌더링을 쓰지 않는다.
 		//firstVertex, // 버텍스 버퍼에서의 오프셋
 		//firstIntance // 인스탄스 렌더링에서의 오프셋
-		vkCmdDraw(commandBuffers[i], VertexNum, 1, 0, 0);
+		
+		//vkCmdDraw(commandBuffers[i], VertexNum, Quads.QuadVertices.size() / 3, 0, 0);
+		vkCmdBindIndexBuffer(commandBuffers[i], IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+
+		vkCmdDrawIndexed(commandBuffers[i], Quads.QuadIndices.size(), 1, 0, 0, 0);
 
 		vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -1131,6 +1138,24 @@ void VulkanRenderer::CreateVertexBuffer(const std::vector<Vertex>& InVertex)
 	CopyBuffer(stagingBuffer, VertexBuffer, bufferSize);
 
 	VertexNum = (uint32_t)InVertex.size();
+}
+
+void VulkanRenderer::CreateIndexBuffer(const std::vector<uint16_t>& InIndices)
+{
+	VkDeviceSize bufferSize = sizeof(InIndices[0]) * InIndices.size();
+
+	VDeleter<VkBuffer> stagingBuffer{ device, vkDestroyBuffer };
+	VDeleter<VkDeviceMemory> stagingBufferMemory{ device, vkFreeMemory };
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+	void* data;
+	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+	memcpy(data, InIndices.data(), (size_t)bufferSize);
+	vkUnmapMemory(device, stagingBufferMemory);
+
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, IndexBuffer, IndexBufferMemory);
+
+	CopyBuffer(stagingBuffer, IndexBuffer, bufferSize);
 }
 
 void VulkanRenderer::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
