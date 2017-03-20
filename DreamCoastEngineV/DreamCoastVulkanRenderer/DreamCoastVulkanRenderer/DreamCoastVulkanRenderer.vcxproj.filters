@@ -39,6 +39,9 @@
     <ClCompile Include="UniformBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TextureLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DcCommonHeader.h">
@@ -62,6 +65,9 @@
     <ClInclude Include="UniformBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TextureLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\Shader\BaseFragmentShader.frag">
@@ -77,16 +83,13 @@
       <Filter>Shader</Filter>
     </None>
     <None Include="..\..\..\README.md" />
-    <None Include="..\..\..\Shader\BaseFragmentShader.spv">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="..\..\..\Shader\BaseTriVertexShader.spv">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="..\..\..\Shader\BaseVertexShader.spv">
-      <Filter>Shader</Filter>
-    </None>
     <None Include="..\..\..\Shader\UniformBufferVertexShader.vert">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="..\..\..\Shader\TexCoordFragShader.frag">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="..\..\..\Shader\UniformTexCoordVS.vert">
       <Filter>Shader</Filter>
     </None>
   </ItemGroup>

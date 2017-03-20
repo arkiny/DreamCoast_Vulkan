@@ -22,6 +22,7 @@
     <ProjectGuid>{AB401676-FB25-4DF1-B820-896ED1EDF217}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>DreamCoastVulkanRenderer</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -71,12 +72,14 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>..\..\..\Bin\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>..\..\..\Bin\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -97,7 +100,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\include;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Include;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Third-Party\Include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\include;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Include;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Third-Party\Include;..\..\..\ThirdParty\stb</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeaderFile>DcCommonHeader.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -110,6 +113,9 @@
       <AdditionalOptions>/VERBOSE:LIB %(AdditionalOptions)</AdditionalOptions>
       <IgnoreSpecificDefaultLibraries>MSVCRT.lib</IgnoreSpecificDefaultLibraries>
     </Link>
+    <PreBuildEvent>
+      <Command>../../../Shader/Compile.bat</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -136,7 +142,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\include;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Include;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Third-Party\Include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\include;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Include;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Third-Party\Include;..\..\..\ThirdParty\stb</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeaderFile>DcCommonHeader.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -153,6 +159,9 @@
       </IgnoreSpecificDefaultLibraries>
       <AdditionalOptions>/VERBOSE:LIB %(AdditionalOptions)</AdditionalOptions>
     </Link>
+    <PreBuildEvent>
+      <Command>../../../Shader/Compile.bat</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AppMain.cpp" />
@@ -160,6 +169,7 @@
     <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="SystemSetting.cpp" />
+    <ClCompile Include="TextureLoader.cpp" />
     <ClCompile Include="UniformBuffer.cpp" />
     <ClCompile Include="VertexElements.cpp" />
   </ItemGroup>
@@ -169,19 +179,19 @@
     <ClInclude Include="Geometry.h" />
     <ClInclude Include="SystemSetting.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="TextureLoader.h" />
     <ClInclude Include="UniformBuffer.h" />
     <ClInclude Include="VertexElements.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\README.md" />
     <None Include="..\..\..\Shader\BaseFragmentShader.frag" />
-    <None Include="..\..\..\Shader\BaseFragmentShader.spv" />
-    <None Include="..\..\..\Shader\BaseTriVertexShader.spv" />
     <None Include="..\..\..\Shader\BaseTriVertexShader.vert" />
-    <None Include="..\..\..\Shader\BaseVertexShader.spv" />
     <None Include="..\..\..\Shader\BaseVertexShader.vert" />
     <None Include="..\..\..\Shader\Compile.bat" />
+    <None Include="..\..\..\Shader\TexCoordFragShader.frag" />
     <None Include="..\..\..\Shader\UniformBufferVertexShader.vert" />
+    <None Include="..\..\..\Shader\UniformTexCoordVS.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

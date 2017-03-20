@@ -52,6 +52,8 @@ public:
 	void CreateVertexBuffer(const std::vector<Vertex>& InVertex);
 	void CreateIndexBuffer(const std::vector<uint16_t>& InIndices);
 	void CreateUniformBuffer(const UniformBufferObject& InObject);
+	void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VDeleter<VkImage>& image, VDeleter<VkDeviceMemory>& imageMemory);
+	void CreateImageView(VkImage image, VkFormat format, VDeleter<VkImageView>& imageView);
 
 	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
@@ -79,10 +81,23 @@ private:
 	void CreateGraphicsPipeLine();
 	void CreateFrameBuffer();
 	void CreateCommandPool();
+
+	void CreateTextureImage();
+	void CreateTextureImageView();
+	void CreateTextureSampler();
+
 	void CreateCommandBuffers();
 	void CreateSemaphore();
 
 	void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VDeleter<VkBuffer>& buffer, VDeleter<VkDeviceMemory>& bufferMemory);
+
+	// Command Helper
+	VkCommandBuffer BeginSingleTimeCommands();
+	void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
+	//void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+	void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+	void CopyImage(VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height);
+
 
 	// helpers
 	static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType,
@@ -154,4 +169,10 @@ private:
 	UniformBufferObject UniformBuffer;
 	VDeleter<VkDescriptorPool> descriptorPool{ device, vkDestroyDescriptorPool };
 	VkDescriptorSet descriptorSet; // descriptorPool 삭제시에 같이 삭제된다.
+
+	VDeleter<VkImage> textureImage{ device, vkDestroyImage };
+	VDeleter<VkDeviceMemory> textureImageMemory{ device, vkFreeMemory };
+	VDeleter<VkBuffer> vertexBuffer{ device, vkDestroyBuffer };
+	VDeleter<VkImageView> textureImageView{ device, vkDestroyImageView };
+	VDeleter<VkSampler> textureSampler{ device, vkDestroySampler };
 };
