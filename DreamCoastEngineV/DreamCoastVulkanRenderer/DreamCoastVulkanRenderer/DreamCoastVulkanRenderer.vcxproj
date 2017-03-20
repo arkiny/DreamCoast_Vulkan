@@ -160,6 +160,7 @@
     <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="SystemSetting.cpp" />
+    <ClCompile Include="UniformBuffer.cpp" />
     <ClCompile Include="VertexElements.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -168,6 +169,7 @@
     <ClInclude Include="Geometry.h" />
     <ClInclude Include="SystemSetting.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="UniformBuffer.h" />
     <ClInclude Include="VertexElements.h" />
   </ItemGroup>
   <ItemGroup>
@@ -179,6 +181,7 @@
     <None Include="..\..\..\Shader\BaseVertexShader.spv" />
     <None Include="..\..\..\Shader\BaseVertexShader.vert" />
     <None Include="..\..\..\Shader\Compile.bat" />
+    <None Include="..\..\..\Shader\UniformBufferVertexShader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -54,6 +54,9 @@ void VulkanRenderer::InitRenderer(GLFWwindow* InWindow)
 	CreateSwapChain(); // 스왑체인 만들기
 	CreateImageViews(); // 이미지 뷰 만들기
 	CreateRenderPass(); // 렌더 패스 만들기
+
+	CreateDescriptorSetLayout(); // 디스크립터 세트 만들기
+
 	CreateGraphicsPipeLine(); // 그래픽 파이프 라인 만들기, 셰이더 불러오기 포함
 	CreateFrameBuffer(); // 프레임 버퍼 만들기
 	CreateCommandPool(); // 커맨드 풀 만들기
@@ -61,8 +64,10 @@ void VulkanRenderer::InitRenderer(GLFWwindow* InWindow)
 	//CreateVertexBuffer(Triangle.trianglevertices); // 버텍스 버퍼만들기, 동적처리는 좀 나중에
 	CreateVertexBuffer(Quads.QuadVertices);
 	CreateIndexBuffer(Quads.QuadIndices);
-	
-	
+	CreateUniformBuffer(UniformBuffer);
+	CreateDescriptorPool(); // 디스크립터 풀 만들기
+	CreateDescriptorSet();
+
 	CreateCommandBuffers(); // 커맨드 버퍼 만들기
 	CreateSemaphore(); // 세마포어 만들기
 }
@@ -608,7 +613,7 @@ void VulkanRenderer::CreateImageViews()
 void VulkanRenderer::CreateGraphicsPipeLine()
 {
 	// 바이트 코드로 컴파일된 쉐이더들을 불러온다.
-	auto vertShaderCode = FileManager::ReadFile("../../../Shader/BaseVertexShader.spv");
+	auto vertShaderCode = FileManager::ReadFile("../../../Shader/UniformBufferVertexShader.spv");
 	auto fragShaderCode = FileManager::ReadFile("../../../Shader/BaseFragmentShader.spv");
 	
 	// 셰이더 모듈을 생성한다.
@@ -707,7 +712,8 @@ void VulkanRenderer::CreateGraphicsPipeLine()
 	rasterizer.lineWidth = 1.0f;
 	// 페이스 컬링모드 입니다.
 	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	//rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	// 프래그먼트의 슬로프에 따라 다른 값을 적용할수 있습니다. 쉐도우 매핑에 사용됩니다.
 	rasterizer.depthBiasEnable = VK_FALSE;
 	rasterizer.depthBiasConstantFactor = 0.0f;// optional
@@ -791,12 +797,18 @@ void VulkanRenderer::CreateGraphicsPipeLine()
 
 	// 파이프라인 레이아웃
 	// 유니폼 밸류를 사용하므로 아래와 같이 생성합니다.
+	//VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
+	//pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	//pipelineLayoutInfo.setLayoutCount = 0; // optional
+	//pipelineLayoutInfo.pSetLayouts = nullptr;//optional
+	//pipelineLayoutInfo.pushConstantRangeCount = 0;//optional
+	//pipelineLayoutInfo.pPushConstantRanges = 0;//opiotnal
+
+	VkDescriptorSetLayout setLayouts[] = { descriptorSetLayout };
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 0; // optional
-	pipelineLayoutInfo.pSetLayouts = nullptr;//optional
-	pipelineLayoutInfo.pushConstantRangeCount = 0;//optional
-	pipelineLayoutInfo.pPushConstantRanges = 0;//opiotnal
+	pipelineLayoutInfo.setLayoutCount = 1;
+	pipelineLayoutInfo.pSetLayouts = setLayouts;
 
 	if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, pipelineLayout.replace()) != VK_SUCCESS)
 	{
@@ -931,6 +943,100 @@ void VulkanRenderer::CreateRenderPass()
 	}
 }
 
+void VulkanRenderer::CreateDescriptorSetLayout()
+{
+	VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+	uboLayoutBinding.binding = 0;
+
+	//VK_DESCRIPTOR_TYPE_SAMPLER = 0,
+	//VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1,
+	//VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE = 2,
+	//VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3,
+	//VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER = 4,
+	//VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER = 5,
+	//VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER = 6,
+	//VK_DESCRIPTOR_TYPE_STORAGE_BUFFER = 7,
+	//VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC = 8,
+	//VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC = 9,
+	//VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT = 10,
+	//VK_DESCRIPTOR_TYPE_BEGIN_RANGE = VK_DESCRIPTOR_TYPE_SAMPLER,
+	//VK_DESCRIPTOR_TYPE_END_RANGE = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+
+	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER; // 유니폼 버퍼 바인딩
+	uboLayoutBinding.descriptorCount = 1; // 우리의 MVP는 하나의 유니폼 버퍼만 바인딩하니, 하나만 바인딩 하는 걸로
+
+	//VK_SHADER_STAGE_VERTEX_BIT = 0x00000001,
+	//VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT = 0x00000002,
+	//VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT = 0x00000004,
+	//VK_SHADER_STAGE_GEOMETRY_BIT = 0x00000008,
+	//VK_SHADER_STAGE_FRAGMENT_BIT = 0x00000010,
+	//VK_SHADER_STAGE_COMPUTE_BIT = 0x00000020,
+	//VK_SHADER_STAGE_ALL_GRAPHICS = 0x0000001F,
+	//VK_SHADER_STAGE_ALL = 0x7FFFFFFF,
+	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+	uboLayoutBinding.pImmutableSamplers = nullptr; // Optional, 이미지 샘플링에서 쓰임
+
+	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	layoutInfo.bindingCount = 1;
+	layoutInfo.pBindings = &uboLayoutBinding;
+
+	if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, descriptorSetLayout.replace()) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create descriptor set layout!");
+	}
+}
+
+void VulkanRenderer::CreateDescriptorSet()
+{
+	VkDescriptorSetLayout layouts[] = { descriptorSetLayout };
+	VkDescriptorSetAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = descriptorPool;
+	allocInfo.descriptorSetCount = 1;
+	allocInfo.pSetLayouts = layouts;
+
+	if (vkAllocateDescriptorSets(device, &allocInfo, &descriptorSet) != VK_SUCCESS) {
+		throw std::runtime_error("failed to allocate descriptor set!");
+	}
+
+	VkDescriptorBufferInfo bufferInfo = {};
+	bufferInfo.buffer = uniformBuffer;
+	bufferInfo.offset = 0;
+	bufferInfo.range = sizeof(UniformBufferObject);
+
+	VkWriteDescriptorSet descriptorWrite = {};
+	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrite.dstSet = descriptorSet;
+	descriptorWrite.dstBinding = 0;
+	descriptorWrite.dstArrayElement = 0;
+	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorWrite.descriptorCount = 1; // 일단 하나
+	descriptorWrite.pBufferInfo = &bufferInfo;
+	descriptorWrite.pImageInfo = nullptr; // Optional 디스크립터가 이미지 데이타를 참조 할때 씀
+	descriptorWrite.pTexelBufferView = nullptr; // Optional 디스크립터가 버퍼뷰를 볼때 씀
+
+	vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+}
+
+void VulkanRenderer::CreateDescriptorPool()
+{
+	VkDescriptorPoolSize poolSize = {};
+	poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	poolSize.descriptorCount = 1;
+
+	VkDescriptorPoolCreateInfo poolInfo = {};
+	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	poolInfo.poolSizeCount = 1;
+	poolInfo.pPoolSizes = &poolSize;
+
+	poolInfo.maxSets = 1;
+
+	if (vkCreateDescriptorPool(device, &poolInfo, nullptr, descriptorPool.replace()) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create descriptor pool!");
+	}
+}
+
 void VulkanRenderer::CreateFrameBuffer()
 {
 	swapChainFrameBuffer.resize(swapChainImageViews.size(), VDeleter<VkFramebuffer>{device, vkDestroyFramebuffer});
@@ -1040,23 +1146,24 @@ void VulkanRenderer::CreateCommandBuffers()
 		//렌더패스가 2차 버퍼에서 실행됨
 		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+			vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
-		if (VertexNum > 0)
-		{
-			VkBuffer vertexBuffers[] = { VertexBuffer };
-			VkDeviceSize offsets[] = { 0 };
-			vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
-		}		
-		//vertexCount, 버텍스 세개짜리 삼각형을 그리므로..
-		//instanceCount, 인스탄스 렌더링을 쓰지 않는다.
-		//firstVertex, // 버텍스 버퍼에서의 오프셋
-		//firstIntance // 인스탄스 렌더링에서의 오프셋
+			if (VertexNum > 0)
+			{
+				VkBuffer vertexBuffers[] = { VertexBuffer };
+				VkDeviceSize offsets[] = { 0 };
+				vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+			}		
+			//vertexCount, 버텍스 세개짜리 삼각형을 그리므로..
+			//instanceCount, 인스탄스 렌더링을 쓰지 않는다.
+			//firstVertex, // 버텍스 버퍼에서의 오프셋
+			//firstIntance // 인스탄스 렌더링에서의 오프셋
 		
-		//vkCmdDraw(commandBuffers[i], VertexNum, Quads.QuadVertices.size() / 3, 0, 0);
-		vkCmdBindIndexBuffer(commandBuffers[i], IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+			vkCmdBindIndexBuffer(commandBuffers[i], IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
-		vkCmdDrawIndexed(commandBuffers[i], Quads.QuadIndices.size(), 1, 0, 0, 0);
+			vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
+
+			vkCmdDrawIndexed(commandBuffers[i], Quads.QuadIndices.size(), 1, 0, 0, 0);
 
 		vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -1156,6 +1263,15 @@ void VulkanRenderer::CreateIndexBuffer(const std::vector<uint16_t>& InIndices)
 	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, IndexBuffer, IndexBufferMemory);
 
 	CopyBuffer(stagingBuffer, IndexBuffer, bufferSize);
+}
+
+void VulkanRenderer::CreateUniformBuffer(const UniformBufferObject & InObject)
+{
+	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformStagingBuffer, uniformStagingBufferMemory);
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, uniformBuffer, uniformBufferMemory);
+
 }
 
 void VulkanRenderer::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
@@ -1276,4 +1392,33 @@ void VulkanRenderer::RecreateSwapChain()
 	CreateFrameBuffer();
 	CreateCommandPool();
 	CreateCommandBuffers();
+}
+
+inline void VulkanRenderer::UpdateUniformBuffer()
+{
+	static auto startTime = std::chrono::high_resolution_clock::now();
+
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f; // 타임체크
+
+	UniformBufferObject ubo = {};
+
+	// matrix, angle, vector
+	ubo.model = glm::rotate(glm::mat4(), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	
+	// eye, center, up
+	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+	//fovy, aspect, zNear, zFar
+	ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width/ (float)swapChainExtent.height, 0.1f, 10.0f);
+
+	// GLM은 OpenGL을 중심으로 디자인 되어있고, Y축이 뒤집어져 있다.
+	ubo.proj[1][1] *= -1;
+
+	void* data;
+	vkMapMemory(device, uniformStagingBufferMemory, 0, sizeof(ubo), 0, &data);
+	memcpy(data, &ubo, sizeof(ubo));
+	vkUnmapMemory(device, uniformStagingBufferMemory);
+
+	CopyBuffer(uniformStagingBuffer, uniformBuffer, sizeof(ubo));
 }

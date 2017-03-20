@@ -34,6 +34,7 @@ public:
 	virtual void DrawFrame() {};
 	virtual void WaitIdle() {};
 	virtual void RecreateSwapChain() {};
+	virtual void UpdateUniformBuffer() {};
 };
 
 class VulkanRenderer : public Renderer
@@ -45,10 +46,12 @@ public:
 	virtual void DrawFrame();
 	virtual void WaitIdle();
 	virtual void RecreateSwapChain();
+	virtual void UpdateUniformBuffer() override;
 
 public:
 	void CreateVertexBuffer(const std::vector<Vertex>& InVertex);
 	void CreateIndexBuffer(const std::vector<uint16_t>& InIndices);
+	void CreateUniformBuffer(const UniformBufferObject& InObject);
 
 	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
@@ -68,6 +71,11 @@ private:
 	void CreateSwapChain();
 	void CreateImageViews();
 	void CreateRenderPass();
+
+	void CreateDescriptorSetLayout();
+	void CreateDescriptorSet();
+	void CreateDescriptorPool();
+
 	void CreateGraphicsPipeLine();
 	void CreateFrameBuffer();
 	void CreateCommandPool();
@@ -115,6 +123,8 @@ private:
 	VDeleter<VkShaderModule> vertShaderModule{ device, vkDestroyShaderModule };
 	VDeleter<VkShaderModule> fragShaderModule{ device, vkDestroyShaderModule };
 
+	VDeleter<VkDescriptorSetLayout> descriptorSetLayout{ device, vkDestroyDescriptorSetLayout };
+
 	VDeleter<VkPipelineLayout> pipelineLayout{ device, vkDestroyPipelineLayout };
 	VDeleter<VkRenderPass> renderPass{device, vkDestroyRenderPass};
 
@@ -135,4 +145,13 @@ private:
 
 	VDeleter<VkBuffer> IndexBuffer{ device, vkDestroyBuffer };
 	VDeleter<VkDeviceMemory> IndexBufferMemory{device, vkFreeMemory};
+
+	VDeleter<VkBuffer> uniformStagingBuffer{ device, vkDestroyBuffer };
+	VDeleter<VkDeviceMemory> uniformStagingBufferMemory{ device, vkFreeMemory };
+	VDeleter<VkBuffer> uniformBuffer{ device, vkDestroyBuffer };
+	VDeleter<VkDeviceMemory> uniformBufferMemory{ device, vkFreeMemory };
+
+	UniformBufferObject UniformBuffer;
+	VDeleter<VkDescriptorPool> descriptorPool{ device, vkDestroyDescriptorPool };
+	VkDescriptorSet descriptorSet; // descriptorPool 삭제시에 같이 삭제된다.
 };

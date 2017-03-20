@@ -56,7 +56,9 @@ private:
 		{			
 			glfwPollEvents();
 			// Game Frame
+			
 			//
+			renderer->UpdateUniformBuffer();
 			renderer->DrawFrame();
 		}
 		renderer->WaitIdle();

@@ -36,6 +36,9 @@
     <ClCompile Include="Geometry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="UniformBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DcCommonHeader.h">
@@ -54,6 +57,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Geometry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UniformBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -78,6 +84,9 @@
       <Filter>Shader</Filter>
     </None>
     <None Include="..\..\..\Shader\BaseVertexShader.spv">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="..\..\..\Shader\UniformBufferVertexShader.vert">
       <Filter>Shader</Filter>
     </None>
   </ItemGroup>
