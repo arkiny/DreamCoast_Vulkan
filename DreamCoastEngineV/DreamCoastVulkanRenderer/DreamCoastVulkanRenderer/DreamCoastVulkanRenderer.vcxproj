@@ -69,6 +69,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\include;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Include;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Third-Party\Include;..\..\..\ThirdParty\stb;$(IncludePath)</IncludePath>
+    <LibraryPath>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\lib-vc2015;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Bin;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Third-Party\Bin;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -76,6 +78,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\include;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Include;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Third-Party\Include;..\..\..\ThirdParty\stb;$(IncludePath)</IncludePath>
+    <LibraryPath>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\lib-vc2015;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Bin;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Third-Party\Bin;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -92,6 +96,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -132,6 +137,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

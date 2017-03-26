@@ -53,7 +53,7 @@ public:
 	void CreateIndexBuffer(const std::vector<uint16_t>& InIndices);
 	void CreateUniformBuffer(const UniformBufferObject& InObject);
 	void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VDeleter<VkImage>& image, VDeleter<VkDeviceMemory>& imageMemory);
-	void CreateImageView(VkImage image, VkFormat format, VDeleter<VkImageView>& imageView);
+	void CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VDeleter<VkImageView>& imageView);
 
 	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
@@ -79,8 +79,9 @@ private:
 	void CreateDescriptorPool();
 
 	void CreateGraphicsPipeLine();
-	void CreateFrameBuffer();
 	void CreateCommandPool();
+	void CreateDepthResources();
+	void CreateFrameBuffer();
 
 	void CreateTextureImage();
 	void CreateTextureImageView();
@@ -116,6 +117,10 @@ private:
 	void CreateShaderModule(const std::vector<char>& code, VDeleter<VkShaderModule>& shaderModule);
 
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+	VkFormat findDepthFormat();
+	bool HasStencilComponent(VkFormat format);
 
 private:
 	VDeleter<VkInstance> instance{ vkDestroyInstance }; // ºÒÄ­ ÀÎ½ºÅº½º
@@ -175,4 +180,8 @@ private:
 	VDeleter<VkBuffer> vertexBuffer{ device, vkDestroyBuffer };
 	VDeleter<VkImageView> textureImageView{ device, vkDestroyImageView };
 	VDeleter<VkSampler> textureSampler{ device, vkDestroySampler };
+
+	VDeleter<VkImage> depthImage{ device, vkDestroyImage };
+	VDeleter<VkDeviceMemory> depthImageMemory{ device, vkFreeMemory };
+	VDeleter<VkImageView> depthImageView{ device, vkDestroyImageView };
 };

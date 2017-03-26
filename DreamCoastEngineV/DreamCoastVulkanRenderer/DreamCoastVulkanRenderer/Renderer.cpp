@@ -5,8 +5,9 @@
 #include "FileManager.h"
 
 // 튜토리얼용 임시 전역 변수
-Geometry Triangle;
-Geometry Quads;
+//Geometry Triangle;
+//Geometry Quads;
+Geometry ThreeDQuads;
 //
 
 
@@ -60,16 +61,21 @@ void VulkanRenderer::InitRenderer(GLFWwindow* InWindow)
 	CreateDescriptorSetLayout(); // 디스크립터 세트 만들기
 
 	CreateGraphicsPipeLine(); // 그래픽 파이프 라인 만들기, 셰이더 불러오기 포함
-	CreateFrameBuffer(); // 프레임 버퍼 만들기
 	CreateCommandPool(); // 커맨드 풀 만들기
-	
+
+	CreateDepthResources(); //뎁스 리소스 만들기
+	CreateFrameBuffer(); // 프레임 버퍼 만들기, 뎁스가 끼였으므로 뎁쓰 뒤로 가야한다.
 	CreateTextureImage();
 	CreateTextureImageView();
 	CreateTextureSampler();
 
 	//CreateVertexBuffer(Triangle.trianglevertices); // 버텍스 버퍼만들기, 동적처리는 좀 나중에
-	CreateVertexBuffer(Quads.QuadVerticesWithUV);
-	CreateIndexBuffer(Quads.QuadIndices);
+	//CreateVertexBuffer(Quads.QuadVerticesWithUV);
+	//CreateIndexBuffer(Quads.QuadIndices);
+
+	CreateVertexBuffer(ThreeDQuads.ThreeDDoubleVerticesWithUV);
+	CreateIndexBuffer(ThreeDQuads.ThreeDDoubleIndices);
+
 	CreateUniformBuffer(UniformBuffer);
 	CreateDescriptorPool(); // 디스크립터 풀 만들기
 	CreateDescriptorSet();
@@ -611,7 +617,7 @@ void VulkanRenderer::CreateImageViews()
 
 	for (uint32_t i = 0; i < swapChainImages.size(); i++)
 	{
-		CreateImageView(swapChainImages[i], swapChainImageFormat, swapChainImageViews[i]);
+		CreateImageView(swapChainImages[i], swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT,swapChainImageViews[i]);
 	}
 }
 
@@ -737,7 +743,17 @@ void VulkanRenderer::CreateGraphicsPipeLine()
 	multisampling.alphaToOneEnable = VK_FALSE; // Optional
 
 	// 현 튜토리얼에서는 뎁스와 스텐실 버퍼를 만들지 않습니다. 
-	//VkPipelineDepthStencilStateCreateInfo
+	VkPipelineDepthStencilStateCreateInfo depthStencil = {};
+	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	depthStencil.depthTestEnable = VK_TRUE;
+	depthStencil.depthWriteEnable = VK_TRUE;
+	depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+	depthStencil.depthBoundsTestEnable = VK_FALSE;
+	depthStencil.minDepthBounds = 0.0f; // Optional
+	depthStencil.maxDepthBounds = 1.0f; // Optional
+	depthStencil.stencilTestEnable = VK_FALSE;
+	depthStencil.front = {}; // Optional
+	depthStencil.back = {}; // Optional
 
 	// 컬러 블렌딩
 	// 아래의 스도코드를 따릅니다.
@@ -832,7 +848,7 @@ void VulkanRenderer::CreateGraphicsPipeLine()
 	pipelineInfo.pViewportState = &viewportState;
 	pipelineInfo.pRasterizationState = &rasterizer;
 	pipelineInfo.pMultisampleState = &multisampling;
-	pipelineInfo.pDepthStencilState = nullptr; // 현 튜토리얼에서는 사용하지 않습니다.
+	pipelineInfo.pDepthStencilState = &depthStencil;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDynamicState = nullptr; // Optional
 
@@ -884,6 +900,42 @@ uint32_t VulkanRenderer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFla
 	throw std::runtime_error("failed to find suitable memory type!");
 }
 
+VkFormat VulkanRenderer::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
+{
+	VkFormatProperties props;
+	for (VkFormat format : candidates)
+	{
+		VkFormatProperties props;
+		vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &props);
+
+		if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
+			return format;
+		}
+		else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
+			return format;
+		}
+
+	}
+
+	//linearTilingFeatures: Use cases that are supported with linear tiling
+	//optimalTilingFeatures : Use cases that are supported with optimal tiling
+	//bufferFeatures : Use cases that are supported for buffers
+
+	throw std::runtime_error("failed to find support format!");
+	//return VkFormat();
+}
+
+inline VkFormat VulkanRenderer::findDepthFormat() {
+	return findSupportedFormat({ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
+		VK_IMAGE_TILING_OPTIMAL,
+		VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+}
+
+inline bool VulkanRenderer::HasStencilComponent(VkFormat format)
+{
+	return (format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT);
+}
+
 void VulkanRenderer::CreateRenderPass()
 {
 	VkAttachmentDescription colorAttachment = {};
@@ -913,15 +965,31 @@ void VulkanRenderer::CreateRenderPass()
 	colorAttachmentRef.attachment = 0;
 	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+	VkAttachmentDescription depthAttachment = {};
+	depthAttachment.format = findDepthFormat();
+	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthAttachment.initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	VkAttachmentReference depthAttachmentRef = {};
+	depthAttachmentRef.attachment = 1;
+	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
 	VkSubpassDescription subPass = {};
 	subPass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subPass.colorAttachmentCount = 1;
 	subPass.pColorAttachments = &colorAttachmentRef;
+	subPass.pDepthStencilAttachment = &depthAttachmentRef;
 	//서브패스의 기타 패러미터
 	//pInputAttachments: 쉐이더에서 읽을 어태치
 	//pResolveAttachments : 멀티샘플링에서 사용할 컬러 어태치들
 	//pDepthStencilAttachment : 뎁스 및 스텐실 데이타에서 사용될 어태치들
 	//pPreserveAttachments : 여기서 사용되지 않지만 보존되어야 할 어태치들
+
 
 	// 서브패스 이펜던시 그래프 설정
 	VkSubpassDependency dependency = {};
@@ -932,11 +1000,12 @@ void VulkanRenderer::CreateRenderPass()
 	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 	
-
+	// 뎁스 추가로 어태치먼트가 두개로 늘어났으니 수정해줘야함
+	std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
 	VkRenderPassCreateInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = 1;
-	renderPassInfo.pAttachments = &colorAttachment;
+	renderPassInfo.attachmentCount = attachments.size();
+	renderPassInfo.pAttachments = attachments.data();
 	renderPassInfo.subpassCount = 1;
 	renderPassInfo.pSubpasses = &subPass;
 	renderPassInfo.dependencyCount = 1;
@@ -1097,15 +1166,18 @@ void VulkanRenderer::CreateFrameBuffer()
 	swapChainFrameBuffer.resize(swapChainImageViews.size(), VDeleter<VkFramebuffer>{device, vkDestroyFramebuffer});
 	for (size_t i = 0; i < swapChainImageViews.size(); ++i)
 	{
-		VkImageView attachement[] = { swapChainImageViews[i] };
-		
+		std::array<VkImageView, 2> attachments = {
+			swapChainImageViews[i],
+			depthImageView
+		};
+
 		VkFramebufferCreateInfo framebufferInfo = {};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		// 렌더패스의 어태치먼트와 동일한 숫자의 어태치먼트를 가져야 한다.
 		framebufferInfo.renderPass = renderPass;
 		// 이미지 뷰의 갯수 및 이미지뷰 어레이
-		framebufferInfo.attachmentCount = 1;
-		framebufferInfo.pAttachments = attachement;
+		framebufferInfo.attachmentCount = attachments.size();
+		framebufferInfo.pAttachments = attachments.data();
 		// 현재 스왑체인 이미지는 하나이므로, 레이어는 1
 		framebufferInfo.width = swapChainExtent.width;
 		framebufferInfo.height = swapChainExtent.height;
@@ -1144,7 +1216,23 @@ void VulkanRenderer::CreateCommandPool()
 
 
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h> // stb 이미지 라이브러리
+#include <stb_image.h> 
+
+void VulkanRenderer::CreateDepthResources()
+{
+	//VK_FORMAT_D32_SFLOAT: 32 - bit float for depth
+	//VK_FORMAT_D32_SFLOAT_S8_UINT : 32 - bit signed float for depth and 8 bit stencil component
+	//VK_FORMAT_D24_UNORM_S8_UINT : 24 - bit float for depth and 8 bit stencil component
+	VkFormat depthFormat = findDepthFormat();
+	CreateImage(swapChainExtent.width, swapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
+	CreateImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, depthImageView);
+
+	
+	TransitionImageLayout(depthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+	
+}
+
+// stb 이미지 라이브러리
 void VulkanRenderer::CreateTextureImage()
 {
 	int texWidth, texHeight, texChannels;
@@ -1214,7 +1302,7 @@ void VulkanRenderer::CreateTextureImage()
 void VulkanRenderer::CreateTextureImageView()
 {
 	// 뷰정보와 이미지가 필요함
-	CreateImageView(textureImage, VK_FORMAT_R8G8B8A8_UNORM, textureImageView);
+	CreateImageView(textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT,textureImageView);
 }
 
 void VulkanRenderer::CreateTextureSampler()
@@ -1302,9 +1390,11 @@ void VulkanRenderer::CreateCommandBuffers()
 
 		// 검은색으로 클리어
 		// VK_ATTACHMENT_LOAD_OP_CLEAR에서 사용될 것
-		VkClearValue clearColor = {0.0f, 0.5f, 0.5f, 1.0f};
-		renderPassInfo.clearValueCount = 1;
-		renderPassInfo.pClearValues = &clearColor; 
+		std::array<VkClearValue, 2> clearValues = {};
+		clearValues[0].color = { 0.0f, 0.5f, 0.5f, 1.0f };
+		clearValues[1].depthStencil = { 1.0f, 0 };
+		renderPassInfo.clearValueCount = clearValues.size();
+		renderPassInfo.pClearValues = clearValues.data(); 
 		//VK_SUBPASS_CONTENTS_INLINE: 
 		//The render pass commands will be embedded in the primary command buffer itself and no secondary command buffers will be executed.
 		//2차 버퍼를 사용하지 않고 주버퍼만 실행
@@ -1329,7 +1419,7 @@ void VulkanRenderer::CreateCommandBuffers()
 
 			vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 
-			vkCmdDrawIndexed(commandBuffers[i], Quads.QuadIndices.size(), 1, 0, 0, 0);
+			vkCmdDrawIndexed(commandBuffers[i], ThreeDQuads.ThreeDDoubleIndices.size(), 1, 0, 0, 0);
 
 		vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -1495,14 +1585,14 @@ void VulkanRenderer::CreateImage(uint32_t width, uint32_t height, VkFormat forma
 	vkBindImageMemory(device, image, imageMemory, 0);
 }
 
-void VulkanRenderer::CreateImageView(VkImage image, VkFormat format, VDeleter<VkImageView>& imageView)
+void VulkanRenderer::CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VDeleter<VkImageView>& imageView)
 {
 	VkImageViewCreateInfo viewInfo = {};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	viewInfo.image = image;
 	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 	viewInfo.format = format;
-	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	viewInfo.subresourceRange.aspectMask = aspectFlags;
 	viewInfo.subresourceRange.baseMipLevel = 0;
 	viewInfo.subresourceRange.levelCount = 1;
 	viewInfo.subresourceRange.baseArrayLayer = 0;
@@ -1566,6 +1656,17 @@ void VulkanRenderer::TransitionImageLayout(VkImage image, VkFormat format, VkIma
 	barrier.subresourceRange.baseArrayLayer = 0;
 	barrier.subresourceRange.layerCount = 1;
 
+	if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+		if (HasStencilComponent(format)) {
+			barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+		}
+	}
+	else {
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	}
+
 	// Validation Level에서 필요하다
 	if (oldLayout == VK_IMAGE_LAYOUT_PREINITIALIZED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) {
 		barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
@@ -1578,6 +1679,10 @@ void VulkanRenderer::TransitionImageLayout(VkImage image, VkFormat format, VkIma
 	else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
 		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	}
+	else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+		barrier.srcAccessMask = 0;
+		barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 	}
 	else {
 		throw std::invalid_argument("unsupported layout transition!");
@@ -1704,6 +1809,7 @@ void VulkanRenderer::RecreateSwapChain()
 	CreateImageViews();
 	CreateRenderPass();
 	CreateGraphicsPipeLine();
+	CreateDepthResources();
 	CreateFrameBuffer();
 	CreateCommandPool();
 	CreateCommandBuffers();
