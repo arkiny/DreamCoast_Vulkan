@@ -3,13 +3,13 @@
 #include "Geometry.h"
 #include "SystemSetting.h"
 #include "FileManager.h"
+#include "Model.h"
 
 // 튜토리얼용 임시 전역 변수
 //Geometry Triangle;
 //Geometry Quads;
-Geometry ThreeDQuads;
-//
-
+//Geometry ThreeDQuads;
+Model ModelTute;
 
 VkResult CreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT* pCreateInfo,
 	const VkAllocationCallbacks* pAllocator, VkDebugReportCallbackEXT* pCallback)
@@ -73,8 +73,9 @@ void VulkanRenderer::InitRenderer(GLFWwindow* InWindow)
 	//CreateVertexBuffer(Quads.QuadVerticesWithUV);
 	//CreateIndexBuffer(Quads.QuadIndices);
 
-	CreateVertexBuffer(ThreeDQuads.ThreeDDoubleVerticesWithUV);
-	CreateIndexBuffer(ThreeDQuads.ThreeDDoubleIndices);
+	ModelTute.LoadModel();
+	CreateVertexBuffer(ModelTute.GetVertices());
+	CreateIndexBuffer(ModelTute.GetIndices());
 
 	CreateUniformBuffer(UniformBuffer);
 	CreateDescriptorPool(); // 디스크립터 풀 만들기
@@ -1236,7 +1237,8 @@ void VulkanRenderer::CreateDepthResources()
 void VulkanRenderer::CreateTextureImage()
 {
 	int texWidth, texHeight, texChannels;
-	stbi_uc* pixels = stbi_load("../../../Resource/Texture/BumpTest_01_Diff.tga", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+	stbi_uc* pixels = stbi_load(ModelTute.GetTexturePath().c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+	//stbi_uc* pixels = stbi_load("../../../Resource/Texture/BumpTest_01_Diff.tga", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
 
 	if (!pixels) {
@@ -1415,11 +1417,12 @@ void VulkanRenderer::CreateCommandBuffers()
 			//firstVertex, // 버텍스 버퍼에서의 오프셋
 			//firstIntance // 인스탄스 렌더링에서의 오프셋
 		
-			vkCmdBindIndexBuffer(commandBuffers[i], IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+			//vkCmdBindIndexBuffer(commandBuffers[i], IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+			vkCmdBindIndexBuffer(commandBuffers[i], IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
 			vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 
-			vkCmdDrawIndexed(commandBuffers[i], ThreeDQuads.ThreeDDoubleIndices.size(), 1, 0, 0, 0);
+			vkCmdDrawIndexed(commandBuffers[i], ModelTute.GetIndices().size(), 1, 0, 0, 0);
 
 		vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -1523,6 +1526,24 @@ void VulkanRenderer::CreateVertexBuffer(const std::vector<Vertex>& InVertex)
 }
 
 void VulkanRenderer::CreateIndexBuffer(const std::vector<uint16_t>& InIndices)
+{
+	VkDeviceSize bufferSize = sizeof(InIndices[0]) * InIndices.size();
+
+	VDeleter<VkBuffer> stagingBuffer{ device, vkDestroyBuffer };
+	VDeleter<VkDeviceMemory> stagingBufferMemory{ device, vkFreeMemory };
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+	void* data;
+	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+	memcpy(data, InIndices.data(), (size_t)bufferSize);
+	vkUnmapMemory(device, stagingBufferMemory);
+
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, IndexBuffer, IndexBufferMemory);
+
+	CopyBuffer(stagingBuffer, IndexBuffer, bufferSize);
+}
+
+void VulkanRenderer::CreateIndexBuffer(const std::vector<uint32_t>& InIndices)
 {
 	VkDeviceSize bufferSize = sizeof(InIndices[0]) * InIndices.size();
 

@@ -51,6 +51,7 @@ public:
 public:
 	void CreateVertexBuffer(const std::vector<Vertex>& InVertex);
 	void CreateIndexBuffer(const std::vector<uint16_t>& InIndices);
+	void CreateIndexBuffer(const std::vector<uint32_t>& InIndices);
 	void CreateUniformBuffer(const UniformBufferObject& InObject);
 	void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VDeleter<VkImage>& image, VDeleter<VkDeviceMemory>& imageMemory);
 	void CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VDeleter<VkImageView>& imageView);
@@ -157,7 +158,6 @@ private:
 
 	VDeleter<VkSemaphore> imageAvailableSemaphore{ device, vkDestroySemaphore };
 	VDeleter<VkSemaphore> renderFinishedSemaphore{ device, vkDestroySemaphore };
-
 
 	VDeleter<VkBuffer> VertexBuffer{device, vkDestroyBuffer};
 	uint32_t VertexNum;

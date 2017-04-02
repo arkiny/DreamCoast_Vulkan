@@ -69,7 +69,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\include;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Include;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Third-Party\Include;..\..\..\ThirdParty\stb;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\include;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Include;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Third-Party\Include;..\..\..\ThirdParty\stb;..\..\..\ThirdParty\tinyobjloader;$(IncludePath)</IncludePath>
     <LibraryPath>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\lib-vc2015;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Bin;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Third-Party\Bin;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -78,7 +78,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\include;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Include;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Third-Party\Include;..\..\..\ThirdParty\stb;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\include;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Include;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Third-Party\Include;..\..\..\ThirdParty\stb;..\..\..\ThirdParty\tinyobjloader;$(IncludePath)</IncludePath>
     <LibraryPath>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\lib-vc2015;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Bin;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Third-Party\Bin;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -105,7 +105,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\include;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Include;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Third-Party\Include;..\..\..\ThirdParty\stb</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\include;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Include;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Third-Party\Include;..\..\..\ThirdParty\stb;..\..\..\ThirdParty\tinyobjloader</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeaderFile>DcCommonHeader.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -148,7 +148,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\include;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Include;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Third-Party\Include;..\..\..\ThirdParty\stb</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\ThirdParty\glfw-3.2.1.bin.WIN64\include;..\..\..\ThirdParty\VulkanSDK\1.0.33.0\Include;..\..\..\ThirdParty\VulkanSDK\1.0.26.0\Third-Party\Include;..\..\..\ThirdParty\stb;..\..\..\ThirdParty\tinyobjloader</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeaderFile>DcCommonHeader.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -173,6 +173,7 @@
     <ClCompile Include="AppMain.cpp" />
     <ClCompile Include="FileManager.cpp" />
     <ClCompile Include="Geometry.cpp" />
+    <ClCompile Include="Model.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="SystemSetting.cpp" />
     <ClCompile Include="TextureLoader.cpp" />
@@ -183,6 +184,7 @@
     <ClInclude Include="DcCommonHeader.h" />
     <ClInclude Include="FileManager.h" />
     <ClInclude Include="Geometry.h" />
+    <ClInclude Include="Model.h" />
     <ClInclude Include="SystemSetting.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="TextureLoader.h" />
